@@ -1,4 +1,4 @@
-name: Czyszczenie starych plików GIF
+name: Czyszczenie starych plików GIF - new
 
 on:
   schedule:
