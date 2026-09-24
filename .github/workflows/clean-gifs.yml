@@ -1,0 +1,44 @@
+name: Czyszczenie starych plików GIF
+
+on:
+  schedule:
+    # Automatyczne uruchamianie w każdą niedzielę o 00:00 czasu UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch: # Pozwala uruchomić proces ręcznie w dowolnym momencie
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Pobranie kodu repozytorium (ostatni commit)
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+
+    - name: Usunięcie plików .gif starszych niż 7 dni
+      defaults:
+        run:
+          working-directory: ./gifs
+      run: |
+        # Wyszukuje i kasuje pliki .gif starsze niż 7 dni
+        find . -type f -name "*.gif" -mtime +7 -delete
+
+    - name: Nadpisanie historii (Force Push)
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@://github.com"
+        
+        git add .
+        
+        # Sprawdzenie czy skrypt faktycznie coś skasował
+        if ! git diff-index --quiet HEAD; then
+          # Zastępujemy poprzedni commit nowym, aby rozmiar repo nie rósł w nieskończoność
+          git commit --amend -m "Automatyczne oczyszczenie folderu gifs ze starych plików GIF"
+          git push origin HEAD --force
+          echo "Stare pliki GIF zostały pomyślnie usunięte."
+        else
+          echo "Brak plików GIF starszych niż 7 dni w folderze gifs."
+        fi
