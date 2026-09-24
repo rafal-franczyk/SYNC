@@ -13,32 +13,36 @@ jobs:
       contents: write
 
     steps:
-    - name: Pobranie kodu repozytorium (ostatni commit)
+    - name: Pobranie kodu repozytorium
       uses: actions/checkout@v4
       with:
-        fetch-depth: 1
+        fetch-depth: 0 # Pobiera pełną historię, co zapobiega błędom przy nadpisywaniu commitów
 
     - name: Usunięcie plików .gif starszych niż 7 dni
-      defaults:
-        run:
-          working-directory: ./gifs
       run: |
-        # Wyszukuje i kasuje pliki .gif starsze niż 7 dni
-        find . -type f -name "*.gif" -mtime +7 -delete
+        # Sprawdzamy czy folder gifs w ogóle istnieje
+        if [ -d "gifs" ]; then
+          # Wyszukuje i kasuje pliki .gif starsze niż 7 dni wewnątrz folderu gifs
+          find gifs -type f -name "*.gif" -mtime +7 -delete
+        else
+          echo "Folder gifs nie istnieje."
+        fi
 
     - name: Nadpisanie historii (Force Push)
       run: |
         git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@://github.com"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         
         git add .
         
         # Sprawdzenie czy skrypt faktycznie coś skasował
         if ! git diff-index --quiet HEAD; then
-          # Zastępujemy poprzedni commit nowym, aby rozmiar repo nie rósł w nieskończoność
-          git commit --amend -m "Automatyczne oczyszczenie folderu gifs ze starych plików GIF"
+          echo "Wykryto zmiany. Usuwam stare pliki z historii..."
+          # Tworzy standardowy commit usuwający pliki
+          git commit -m "Automatyczne oczyszczenie folderu gifs ze starych plików GIF"
+          # Wymuszenie pusha na główną gałąź
           git push origin HEAD --force
           echo "Stare pliki GIF zostały pomyślnie usunięte."
         else
-          echo "Brak plików GIF starszych niż 7 dni w folderze gifs."
+          echo "Brak plików GIF starszych niż 7 dni w folderze gifs. Nic do zrobienia."
         fi
