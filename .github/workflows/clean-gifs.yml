@@ -31,16 +31,14 @@ jobs:
     - name: Nadpisanie historii (Force Push)
       run: |
         git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.email "41898282+github-actions[bot]@://github.com"
         
         git add .
         
         # Sprawdzenie czy skrypt faktycznie coś skasował
         if ! git diff-index --quiet HEAD; then
           echo "Wykryto zmiany. Usuwam stare pliki z historii..."
-          # Tworzy standardowy commit usuwający pliki
           git commit -m "Automatyczne oczyszczenie folderu gifs ze starych plików GIF"
-          # Wymuszenie pusha na główną gałąź
           git push origin HEAD --force
           echo "Stare pliki GIF zostały pomyślnie usunięte."
         else
